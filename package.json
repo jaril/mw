@@ -1,0 +1,19 @@
+{
+  "name": "counter-mcp-server",
+  "version": "1.0.0",
+  "description": "MCP server that saves prompts to Supabase database",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.5.0",
+    "@supabase/supabase-js": "^2.45.4",
+    "dotenv": "^16.4.5"
+  },
+  "keywords": ["mcp", "server", "supabase", "prompts", "database"],
+  "author": "",
+  "license": "MIT"
+} 
