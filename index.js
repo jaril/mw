@@ -84,8 +84,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           type: "object",
           properties: {
             id: {
-              type: "number",
-              description: "ID of the prompt to mark as completed",
+              type: "string",
+              description: "UUID of the prompt to mark as completed",
             },
           },
           required: ["id"],
