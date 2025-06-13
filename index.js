@@ -59,7 +59,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
     tools: [
       {
         name: "save_prompt",
-        description: "Save a text prompt to Supabase database",
+        description: "Save a text prompt to Supabase database with timing tracking",
         inputSchema: {
           type: "object",
           properties: {
@@ -77,52 +77,103 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ["text"],
         },
       },
+      {
+        name: "complete_prompt",
+        description: "Mark a prompt as completed and record processing time",
+        inputSchema: {
+          type: "object",
+          properties: {
+            id: {
+              type: "number",
+              description: "ID of the prompt to mark as completed",
+            },
+          },
+          required: ["id"],
+        },
+      },
     ],
   };
 });
 
 // Handle tool calls
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  if (request.params.name !== "save_prompt") {
-    throw new Error(`Unknown tool: ${request.params.name}`);
-  }
+  if (request.params.name === "save_prompt") {
+    const { text, metadata } = request.params.arguments;
 
-  const { text, metadata } = request.params.arguments;
+    try {
+      // Insert the prompt into the database with timing fields
+      const { data, error } = await supabase
+        .from('prompts')
+        .insert([
+          {
+            text: text,
+            metadata: metadata || null,
+            path: process.cwd(),
+            completed_at: null,
+          },
+        ])
+        .select();
 
-  try {
-    // Insert the prompt into the database
-    const { data, error } = await supabase
-      .from('prompts')
-      .insert([
-        {
-          text: text,
-          metadata: metadata || null,
-          created_at: new Date().toISOString(),
-        },
-      ])
-      .select();
+      if (error) {
+        throw error;
+      }
 
-    if (error) {
-      throw error;
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Successfully saved prompt to database with ID: ${data[0].id}`,
+          },
+        ],
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Error saving prompt: ${error.message}`,
+          },
+        ],
+      };
     }
+  } else if (request.params.name === "complete_prompt") {
+    const { id } = request.params.arguments;
 
-    return {
-      content: [
-        {
-          type: "text",
-          text: `Successfully saved prompt to database with ID: ${data[0].id}`,
-        },
-      ],
-    };
-  } catch (error) {
-    return {
-      content: [
-        {
-          type: "text",
-          text: `Error saving prompt: ${error.message}`,
-        },
-      ],
-    };
+    try {
+      const completedAt = new Date().toISOString();
+      
+      // Update the prompt with completion data
+      const { error } = await supabase
+        .from('prompts')
+        .update({
+          completed_at: completedAt,
+        })
+        .eq('id', id);
+
+      if (error) {
+        throw error;
+      }
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Successfully completed prompt ${id}`,
+          },
+        ],
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Error completing prompt: ${error.message}`,
+          },
+        ],
+      };
+    }
+  } else {
+    throw new Error(`Unknown tool: ${request.params.name}`);
   }
 });
 
