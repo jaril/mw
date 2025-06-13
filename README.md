@@ -19,6 +19,7 @@ CREATE TABLE prompts (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   text TEXT NOT NULL,
   metadata JSONB,
+  session_id UUID,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 ```
@@ -75,6 +76,7 @@ Saves a text prompt to your Supabase database with optional metadata.
 
 - `text` (required): The text prompt to save to the database
 - `metadata` (optional): Additional data to store with the prompt (as JSON object)
+- `session_id` (optional): UUID to group related prompts from the same chat session
 
 ### Example Usage
 
@@ -107,6 +109,7 @@ The `prompts` table contains:
 - `id`: UUID primary key (auto-generated)
 - `text`: The prompt text (required)
 - `metadata`: Optional JSON data
+- `session_id`: Optional UUID to group related prompts
 - `created_at`: Timestamp (auto-generated)
 
 ## Error Handling

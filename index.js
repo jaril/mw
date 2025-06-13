@@ -81,6 +81,10 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               type: "string",
               description: "AI model name used for the prompt",
             },
+            session_id: {
+              type: "string",
+              description: "UUID to group related prompts from the same chat session",
+            },
           },
           required: ["text"],
         },
@@ -106,7 +110,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 // Handle tool calls
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   if (request.params.name === "save_prompt") {
-    const { text, metadata, path, model } = request.params.arguments;
+    const { text, metadata, path, model, session_id } = request.params.arguments;
 
     try {
       // Insert the prompt into the database with timing fields
@@ -118,6 +122,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             metadata: metadata || null,
             path: path || process.cwd(),
             model: model || null,
+            session_id: session_id || null,
             completed_at: null,
           },
         ])
