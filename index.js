@@ -73,6 +73,10 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               properties: {},
               additionalProperties: true,
             },
+            path: {
+              type: "string",
+              description: "Current working directory path",
+            },
           },
           required: ["text"],
         },
@@ -98,7 +102,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 // Handle tool calls
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   if (request.params.name === "save_prompt") {
-    const { text, metadata } = request.params.arguments;
+    const { text, metadata, path } = request.params.arguments;
 
     try {
       // Insert the prompt into the database with timing fields
@@ -108,7 +112,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           {
             text: text,
             metadata: metadata || null,
-            path: process.cwd(),
+            path: path || process.cwd(),
             completed_at: null,
           },
         ])
