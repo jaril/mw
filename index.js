@@ -77,6 +77,10 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               type: "string",
               description: "Current working directory path",
             },
+            model: {
+              type: "string",
+              description: "AI model name used for the prompt",
+            },
           },
           required: ["text"],
         },
@@ -102,7 +106,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 // Handle tool calls
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   if (request.params.name === "save_prompt") {
-    const { text, metadata, path } = request.params.arguments;
+    const { text, metadata, path, model } = request.params.arguments;
 
     try {
       // Insert the prompt into the database with timing fields
@@ -113,6 +117,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             text: text,
             metadata: metadata || null,
             path: path || process.cwd(),
+            model: model || null,
             completed_at: null,
           },
         ])
