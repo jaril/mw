@@ -12,15 +12,24 @@ A Model Context Protocol (MCP) server that saves text prompts to a Supabase data
 ## Prerequisites
 
 1. **Supabase Account**: Create a free account at [supabase.com](https://supabase.com)
-2. **Database Setup**: Create a table called `prompts` with the following schema:
+2. **Database Setup**: Create the required tables with the following schemas:
 
 ```sql
+-- Main prompts table
 CREATE TABLE prompts (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   text TEXT NOT NULL,
   metadata JSONB,
   session_id UUID,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Sessions table for aliases (optional - for dashboard use)
+CREATE TABLE sessions (
+  session_id UUID PRIMARY KEY,
+  alias TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 ```
 
@@ -105,12 +114,40 @@ The tool returns a success message with the database ID of the saved prompt, or 
 
 ## Database Schema
 
+### Prompts Table
 The `prompts` table contains:
 - `id`: UUID primary key (auto-generated)
 - `text`: The prompt text (required)
 - `metadata`: Optional JSON data
 - `session_id`: Optional UUID to group related prompts
 - `created_at`: Timestamp (auto-generated)
+
+### Sessions Table (Optional)
+The `sessions` table enables human-readable session aliases:
+- `session_id`: UUID primary key (matches session_id in prompts)
+- `alias`: Human-readable name for the session (e.g., "Bug Fix Session")
+- `created_at`: Timestamp (auto-generated)
+- `updated_at`: Timestamp (auto-generated)
+
+### Dashboard Queries
+Example queries for displaying sessions with aliases:
+
+```sql
+-- Get sessions with prompt counts
+SELECT s.session_id, 
+       COALESCE(s.alias, s.session_id::text) as display_name,
+       COUNT(p.id) as prompt_count
+FROM sessions s 
+LEFT JOIN prompts p ON s.session_id = p.session_id 
+GROUP BY s.session_id, s.alias;
+
+-- Get prompts with session display names
+SELECT p.*, 
+       COALESCE(s.alias, p.session_id::text) as session_name
+FROM prompts p 
+LEFT JOIN sessions s ON p.session_id = s.session_id
+ORDER BY p.created_at DESC;
+```
 
 ## Error Handling
 

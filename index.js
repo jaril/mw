@@ -113,6 +113,29 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { text, metadata, path, model, session_id } = request.params.arguments;
 
     try {
+      // If session_id provided, ensure session record exists
+      if (session_id) {
+        // Check if session exists first
+        const { data: existingSession } = await supabase
+          .from('sessions')
+          .select('session_id')
+          .eq('session_id', session_id)
+          .single();
+
+        if (existingSession) {
+          // Update only updated_at for existing session
+          await supabase
+            .from('sessions')
+            .update({ updated_at: new Date().toISOString() })
+            .eq('session_id', session_id);
+        } else {
+          // Insert new session
+          await supabase
+            .from('sessions')
+            .insert([{ session_id: session_id, alias: null }]);
+        }
+      }
+
       // Insert the prompt into the database with timing fields
       const { data, error } = await supabase
         .from('prompts')
